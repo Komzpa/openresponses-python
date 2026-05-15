@@ -47,22 +47,30 @@ Here's how to send a request to a compliant provider (e.g., OpenRouter or a loca
 
 ```python
 import asyncio
+import httpx
 from openresponses.client import AsyncOpenResponsesClient
 
 async def main():
     # Initialize client (defaults to local proxy if base_url not set)
     # Ensure you have a provider running (see Examples below)
-    client = AsyncOpenResponsesClient(base_url="http://localhost:8001")
+    http_client = httpx.AsyncClient()
+    client = AsyncOpenResponsesClient(
+        base_url="http://localhost:8001",
+        http_client=http_client,
+    )
 
     response = await client.create(
         model="deepseek/deepseek-r1",
         input="Explain semantic streaming.",
+        timeout=30.0,
     )
 
     # Access the output items directly
     for item in response.output:
         if item.type == "message":
             print(f"Answer: {item.content}")
+
+    await http_client.aclose()
 
 if __name__ == "__main__":
     asyncio.run(main())

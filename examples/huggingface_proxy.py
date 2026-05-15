@@ -11,12 +11,10 @@ HF_API_KEY = os.getenv("HF_API_KEY")
 HF_BASE_URL = os.getenv("HF_BASE_URL", "https://api-inference.huggingface.co/v1/")
 
 # Use OpenAI compatible client for HF Inference Endpoints / TGI
-client = AsyncOpenAI(
-    base_url=HF_BASE_URL,
-    api_key=HF_API_KEY or "hf_token"
-)
+client = AsyncOpenAI(base_url=HF_BASE_URL, api_key=HF_API_KEY or "hf_token")
 
 app = FastAPI(title="HuggingFace Proxy")
+
 
 @app.post("/v1/responses")
 async def create_response(request: OpenResponsesRequest):
@@ -25,26 +23,33 @@ async def create_response(request: OpenResponsesRequest):
     model = request.model or "tgi"
 
     if request.stream:
-        return StreamingResponse(stream_hf(model, messages), media_type="text/event-stream")
+        return StreamingResponse(
+            stream_hf(model, messages), media_type="text/event-stream"
+        )
 
     try:
         completion = await client.chat.completions.create(
-            model=model,
-            messages=messages,
-            stream=False
+            model=model, messages=messages, stream=False
         )
         return OpenResponsesOutput(
             id=completion.id,
             created=completion.created,
             model=model,
-            output=[MessageItem(role="assistant", content=completion.choices[0].message.content)]
+            output=[
+                MessageItem(
+                    role="assistant", content=completion.choices[0].message.content
+                )
+            ],
         )
     except Exception as e:
-         raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 async def stream_hf(model: str, messages: list):
     try:
-        stream = await client.chat.completions.create(model=model, messages=messages, stream=True)
+        stream = await client.chat.completions.create(
+            model=model, messages=messages, stream=True
+        )
         async for chunk in stream:
             content = chunk.choices[0].delta.content
             if content:
@@ -53,6 +58,8 @@ async def stream_hf(model: str, messages: list):
     except Exception as e:
         yield OpenResponsesProvider.create_sse_event("error", {"error": str(e)})
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8005)

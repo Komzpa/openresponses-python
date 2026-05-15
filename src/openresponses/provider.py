@@ -1,12 +1,15 @@
-from typing import Any, AsyncGenerator, Dict, List
+from typing import Any, Dict, List
 import json
-from .models import OpenResponsesOutput, ResponseItem, ReasoningItem, MessageItem, OpenResponsesRequest
+from .models import (
+    OpenResponsesRequest,
+)
+
 
 class OpenResponsesProvider:
     """
     Utilities for building Open Responses Providers.
     """
-    
+
     @staticmethod
     def map_request_to_messages(request: OpenResponsesRequest) -> List[Dict[str, str]]:
         """
@@ -22,8 +25,10 @@ class OpenResponsesProvider:
                     content = item.content
                     if isinstance(content, list):
                         # Flatten list of InputText to string for simple backends
-                        content = "".join([i.text for i in content if i.type == "input_text"])
-                    
+                        content = "".join(
+                            [i.text for i in content if i.type == "input_text"]
+                        )
+
                     messages.append({"role": item.role, "content": content})
         return messages
 
@@ -36,12 +41,16 @@ class OpenResponsesProvider:
 
     @staticmethod
     def create_reasoning_delta(content: str) -> str:
-        return OpenResponsesProvider.create_sse_event("response.reasoning.delta", {"delta": content})
+        return OpenResponsesProvider.create_sse_event(
+            "response.reasoning.delta", {"delta": content}
+        )
 
     @staticmethod
     def create_text_delta(content: str) -> str:
-        return OpenResponsesProvider.create_sse_event("response.text.delta", {"delta": content})
-    
+        return OpenResponsesProvider.create_sse_event(
+            "response.text.delta", {"delta": content}
+        )
+
     @staticmethod
     def create_done_event() -> str:
         return "event: response.done\ndata: {}\n\n"

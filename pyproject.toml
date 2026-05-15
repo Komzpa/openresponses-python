@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "openresponses-python"
-version = "0.1.2"
+version = "0.1.3"
 description = "Un-Official Python SDK for the Open Responses standard"
 readme = "README.md"
 requires-python = ">=3.11"

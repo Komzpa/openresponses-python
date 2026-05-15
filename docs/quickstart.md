@@ -25,11 +25,16 @@ Create a file `main.py`:
 
 ```python
 import asyncio
+import httpx
 from openresponses.client import AsyncOpenResponsesClient
 
 async def main():
     # Connect to the local provider we started
-    client = AsyncOpenResponsesClient(base_url="http://localhost:8001")
+    http_client = httpx.AsyncClient()
+    client = AsyncOpenResponsesClient(
+        base_url="http://localhost:8001",
+        http_client=http_client,
+    )
 
     print("Sending request...")
 
@@ -37,7 +42,8 @@ async def main():
     stream = await client.create(
         model="deepseek/deepseek-r1",
         input="Why is the sky blue?",
-        stream=True
+        stream=True,
+        timeout=30.0,
     )
 
     print("\nResponse:")
@@ -50,6 +56,7 @@ async def main():
              print(event.data['delta'], end="", flush=True)
 
     print("\n\nDone!")
+    await http_client.aclose()
 
 if __name__ == "__main__":
     asyncio.run(main())
